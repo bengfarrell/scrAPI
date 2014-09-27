@@ -19,19 +19,19 @@ app.on('window-all-closed', function() {
 // This method will be called when atom-shell has done everything
 // initialization and ready for creating browser windows.
 app.on('ready', function() {
-    var injectscript = escape(__dirname + '/inject/test.js');
+    var injectscript = escape(__dirname + '/inject/scraper.js');
     mainWindow = new BrowserWindow( { width: '800px', height: '600px', 'web-preferences': { 'web-security': false } });
     mainWindow.loadUrl('http://craigslist.org' );
     mainWindow.openDevTools();
     mainWindow.getWebContents().on('did-finish-load', function() {
         var remotejs = "var js = document.createElement('script'); \
                         js.src = 'file://' + unescape('" + injectscript + "'); \
-                        console.log(js); \
                         document.getElementsByTagName('body')[0].appendChild(js);";
 
         this.executeJavaScript(remotejs);
     });
 
+    console.log(process.version)
     // Emitted when the window is closed.
     mainWindow.on('closed', function() {
         mainWindow = null;
@@ -41,7 +41,10 @@ app.on('ready', function() {
 var ipc = require('ipc');
 ipc.on('ready', function(site) {
     console.log(site.uri + ' is ready' );
-    mainWindow.webContents.send('parseRequest', { selector: 'li', key: { name: 'thing', selector: 'a' }, value: { name: 'isa', selector: '[href]' } });
+    mainWindow.webContents.send('parseRequest',
+        { selector: '#main .cats li', properties: [
+            { name: 'name', selector: 'a span.txt', killChildren: true },
+            { name: 'link', selector: 'a', attribute: "href", convertToAbsolutePath: true }] });
 });
 
 ipc.on('parseResponse', function(event, arg) {

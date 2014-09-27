@@ -17,9 +17,25 @@ ipc.on('parseRequest', function(req) {
 
     $(selection).each(function(index) {
         var result = {};
-        var key = $(this).find(req.key.selector).html();
-        var value = $(this).find(req.value.selector).html();
-        result[key] = value;
+        for ( var c in req.properties ) {
+            var prop;
+            if (req.properties[c].attribute) {
+                prop = $(this).find(req.properties[c].selector).attr(req.properties[c].attribute);
+            } else {
+                var dollaprop;
+                dollaprop = $(this).find(req.properties[c].selector);
+
+                if (req.properties[c].killChildren) {
+                    dollaprop.find("*").remove();
+                }
+                prop = dollaprop.html();
+            }
+
+            if (req.properties[c].convertToAbsolutePath) {
+                prop = document.URL.slice(0, document.URL.length-1) + prop;
+            }
+            result[req.properties[c].name] = prop;
+        }
         response.push(result);
     });
     ipc.send('parseResponse', { items: response } );
